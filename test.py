@@ -3,10 +3,12 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 import time
+import re
+from datetime import datetime, timedelta
 
 
 driver = webdriver.Chrome()
-driver.get("https://www.showtimes.com.tw/programs")
+driver.get("https://www.ccmovie.com.tw/product.php?_path=product_showtimes")
 
 time.sleep(5)  # 等待 JS 載入
 
@@ -14,27 +16,18 @@ time.sleep(5)  # 等待 JS 載入
 for i in range(1):  # 測試爬兩部電影
     html = driver.page_source
     soup = BeautifulSoup(html,'html.parser')
-    movies = driver.find_elements(By.CSS_SELECTOR, "a.sc-iGgWBj")
+    movie = soup.select_one("div.showtime-item#m_666")
 
-    # 點擊第 i 部電影
-    movies[i].click()
-    time.sleep(3)
-    fdo = driver.find_elements(By.CSS_SELECTOR, "button.sc-gsFSXq")
-    fdo[5].click()
+    date = movie.select_one("span.dateDisplay")
+    print(date.text)
 
-    time.sleep(1)
-    fd = driver.find_elements(By.CSS_SELECTOR, "div.sc-krNlru")
+    lene = movie.select_one("div.info")
+    tim = movie.select("span.float-left.info")
+    for t in tim:   
+        timee = datetime.strptime(t.text, "%H:%M")
+        new_time = timee + timedelta(minutes=int(re.findall(r'\d+', lene.text)[0]))  
+        print(f"播映時間 {t.text} ~　{new_time.strftime("%H:%M")}")
 
-    for f in fd:
-        print(f.text.replace("\n"," "))
-        f.click()
-        a = driver.find_elements(By.CSS_SELECTOR, "div.grid.grid-cols-2 div.text-lg")
-        for b in a:
-            print("電影時間資訊：", b.text)
-        print()
-        time.sleep(1)
-
-    # 回到上一頁
-    driver.back()
+    
 
 driver.quit()
